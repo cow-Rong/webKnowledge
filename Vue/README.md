@@ -1,7 +1,52 @@
 ### v-bind和v-model的区别
 
 1.v-bind用来绑定数据和属性以及表达式，缩写为'：'
-2.v-model使用在表单中，实现双向数据绑定的，在表单元素外使用不起作用
+2.v-model使用在表单中，实现表单输入和应用状态之间的双向绑定，在表单元素外使用不起作用
+
+### v-if和v-show的区别
+
+1.v-if用来增加删除DOM节点
+2.v-show使用display：hidden实现DOM表现的隐藏，更适合频繁变化
+
+### v-on也可以用@实现事件的监听
+
+### computed和watch的区别
+
+1.computed可以监听多个参数
+2.watch只能监听一个数据
+
+### computed和methods的区别
+
+1.计算属性computed是基于它们的响应式依赖进行缓存的。只在相关响应式依赖（this的data？？）发生改变时它们才会重新求值。Date.now() 不是响应式依赖
+2.每当触发重新渲染？时，调用方法methods将总会再次执行函数。
+
+### v-for中的key属性
+
+1.v-for渲染的元素列表时，它默认使用“就地更新”的策略。
+如果数据项的顺序被改变，Vue 将不会移动 DOM 元素来匹配数据项的顺序，而是就地更新每个元素，并且确保它们在每个索引位置正确渲染。默认的模式是高效的
+为每项提供一个唯一 key 属性，为了给 Vue 一个提示，以便它能跟踪每个节点的身份，从而重用和重新排序现有元素。
+
+### v-for中的使用数组变异方法或非变异方法替换数组代替直接赋值
+
+1.Vue 将被侦听的数组的变异方法进行了包裹，所以它们也将会触发视图更新。
+push()
+pop()
+shift()
+unshift()
+splice()
+sort()
+reverse()
+
+非变异 (non-mutating method) 方法，例如 filter()、concat() 和 slice() 。它们不会改变原始数组，而总是返回一个新数组。当使用非变异方法时，可以用新数组替换旧数组：
+OM 元素得到最大范围的重用,替换原来的数组是非常高效的操作.
+Vue 不能检测以下数组的变动：
+当你利用索引直接设置一个数组项时，例如：vm.items[indexOfItem] = newValue
+当你修改数组的长度时，例如：vm.items.length = newLength
+Vue 不能检测对象属性的添加或删除：
+Vue.set(object, propertyName, value)
+vm.$set(vm.items, indexOfItem, newValue)
+vm.items.splice(indexOfItem, 1, newValue)
+
 
 ### 什么是 mvvm？
 
@@ -38,11 +83,11 @@ mvc 和 mvvm 其实区别并不大。都是一种设计思想。主要就是 mvc
 ```html
 //父组件通过标签上面定义传值
 <template>
-    <Main :obj="data"></Main>
+    <son :obj="data"></son>
 </template>
 <script>
     //引入子组件
-    import Main form "./main"
+    import son form "./son"
 
     exprot default{
         name:"parent",
@@ -61,13 +106,13 @@ mvc 和 mvvm 其实区别并不大。都是一种设计思想。主要就是 mvc
 
 //子组件通过props方法接受数据
 <template>
-    <div>{{data}}</div>
+    <div>{{obj}}</div>
 </template>
 <script>
     exprot default{
         name:"son",
         //接受父组件传值
-        props:["data"]
+        props:["obj"]
     }
 </script>
 ```
@@ -77,16 +122,16 @@ mvc 和 mvvm 其实区别并不大。都是一种设计思想。主要就是 mvc
 ```html
 //子组件通过$emit方法传递参数
 <template>
-   <div v-on:click="events"></div>
+   <son v-on:parentevent="events"></son>
 </template>
 <script>
     //引入子组件
-    import Main form "./main"
+    import son form "./son"
 
     exprot default{
         methods:{
-            events:function(){
-
+            events:function(param){
+		param
             }
         }
     }
@@ -96,13 +141,13 @@ mvc 和 mvvm 其实区别并不大。都是一种设计思想。主要就是 mvc
 //
 
 <template>
-    <div>{{data}}</div>
+	//子组件可以通过调用内建的 $emit 方法 并传入事件名称来触发一个事件
+    <div v-on:click="$emit('parentevent',param)">click me!</div>
 </template>
 <script>
     exprot default{
         name:"son",
-        //接受父组件传值
-        props:["data"]
+    
     }
 </script>
 ```
@@ -226,10 +271,11 @@ v-if(判断是否隐藏)、v-for(把数据遍历出来)、v-bind(绑定属性)�
 
 ### vue 的双向绑定的原理是什么(常考)
 
-vue.js 是采用数据劫持结合发布者-订阅者模式的方式，通过 Object.defineProperty()来劫持各个属性的 setter，getter，在数据变动时发布消息给订阅者，触发相应的监听回调。
+vue.js 是采用数据劫持结合发布者-订阅者模式的方式，通过 Object.defineProperty()来劫持各个vue实例中的data对象，为其添加setter，getter属性，在数据变动时发布消息给订阅者，触发相应的监听回调。
 
 具体步骤：
-第一步：需要 observe 的数据对象进行递归遍历，包括子属性对象的属性，都加上 setter 和 getter 这样的话，给这个对象的某个值赋值，就会触发 setter，那么就能监听到了数据变化
+第一步：每个组件实例都有一个watcher订阅者，在组件渲染过程中对data数据对象进行递归遍历，包括子属性对象的属性，通过 Object.defineProperty()来劫持每个实例上的数据对象，都加上 setter 和 getter ，给这个对象的某个值赋值，就会触发 setter，那么就能监听到了数据变化，使它关联的组件重新渲染。
+***Vue 会在初始化实例时对属性执行 getter/setter 转化，所以属性必须在 data 对象上存在才能让 Vue 将它转换为响应式的。***
 
 第二步：compile 解析模板指令，将模板中的变量替换成数据，然后初始化渲染页面视图，并将每个指令对应的节点绑定更新函数，添加监听数据的订阅者，一旦数据有变动，收到通知，更新视图
 
@@ -240,6 +286,13 @@ vue.js 是采用数据劫持结合发布者-订阅者模式的方式，通过 Ob
 - 待属性变动 dep.notice()通知时，能调用自身的 update() 方法，并触发 Compile 中绑定的回调，则功成身退。
 
 第四步：MVVM 作为数据绑定的入口，整合 Observer、Compile 和 Watcher 三者，通过 Observer 来监听自己的 model 数据变化，通过 Compile 来解析编译模板指令，最终利用 Watcher 搭起 Observer 和 Compile 之间的通信桥梁，达到数据变化 -> 视图更新；视图交互变化(input) -> 数据 model 变更的双向绑定效果。
+
+### 异步更新队列
+Vue 在更新 DOM 时是异步执行的。只要侦听到数据变化，Vue 将开启一个队列，并缓冲在同一事件循环中发生的所有数据变更。
+如果同一个 watcher 被多次触发，只会被推入到队列中一次。
+然后，在下一个的事件循环“tick”中，Vue 刷新队列并执行实际 (已去重的) 工作。
+设置数据时组件不会立即重新渲染。刷新队列时，组件会在下一个事件循环“tick”中更新。
+如果你想基于更新后的 DOM 状态来做点什么，可以在数据变化之后立即使用 Vue.nextTick(callback)。这样回调函数将在 DOM 更新完成后被调用。
 
 ## vuex 相关
 
